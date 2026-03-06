@@ -10,7 +10,6 @@ A real-time collaborative code editor with operational transformation at its cor
 
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
-- [Project Status](#project-status)
 - [OT Engine](#ot-engine)
 - [Design Rationale](#design-rationale)
 - [Getting Started](#getting-started)
@@ -49,26 +48,6 @@ A real-time collaborative code editor with operational transformation at its cor
 | **Pub/Sub** | Redis (ioredis)           | Session broadcast and presence; optional caching. |
 | **Database**| MongoDB (Mongoose)        | Sessions, document snapshots, user/auth data. |
 | **Auth**    | JWT in httpOnly cookies   | Stateless verification at the API/WS boundary. |
-
----
-
-## Project Status
-
-| Component                    | Status    |
-|-----------------------------|-----------|
-| OT Engine                   | Done      |
-| Project scaffold + Docker   | Next      |
-| Auth + MongoDB models       | Planned   |
-| REST session API            | Planned   |
-| WebSocket infrastructure    | Planned   |
-| Redis Pub/Sub + presence     | Planned   |
-| Op pipeline (persist + broadcast) | Planned   |
-| CodeMirror 6 + OT client     | Planned   |
-| Live cursors + presence UI   | Planned   |
-| Session UI + history         | Planned   |
-| Load test + instrumentation  | Planned   |
-
-*Status: `Done` | `Next` | `Planned`.* (Extend with `In progress` or `Blocked` as needed.)
 
 ---
 
