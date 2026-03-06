@@ -242,6 +242,59 @@ describe('transform — insert vs delete', () => {
   );
 });
 
+describe('transform — delete vs insert', () => {
+  test(
+    'delete entirely before a concurrent insert: delete shifts right',
+    // op1 deletes [0, 3); op2 inserts 2 chars at position 5 (after the delete
+    // range). op2 does not affect the region op1 targets, so op1 is unchanged.
+    () => {
+      const doc = 'hello world';
+      const op1 = del(0, 3);    // delete "hel"
+      const op2 = ins(5, 'XY'); // insert after op1's range
+
+      const op1p = transform(op1, op2);
+      expect(op1p.position).toBe(0);   // unchanged — insert is after delete
+      expect(op1p.length).toBe(3);
+
+      assertConverges(doc, op1, op2);
+    }
+  );
+
+  test(
+    'delete entirely after a concurrent insert: delete shifts right by insert length',
+    // op1 deletes [6, 11); op2 inserts 3 chars at position 0 (before the
+    // delete range). The insertion displaces all following content, so op1
+    // must shift right by the inserted length.
+    () => {
+      const doc = 'hello world';
+      const op1 = del(6, 5);    // delete "world"
+      const op2 = ins(0, 'XYZ'); // insert before op1's range
+
+      const op1p = transform(op1, op2);
+      expect(op1p.position).toBe(9);   // 6 + 3
+      expect(op1p.length).toBe(5);     // length unchanged
+
+      assertConverges(doc, op1, op2);
+    }
+  );
+
+  test(
+    'insert falls inside delete range: delete expands to capture the new chars',
+    // op1 deletes [2, 7); op2 concurrently inserts 2 chars at position 4,
+    // which lands inside op1's intended range. op1 must expand its length to
+    // also cover the newly inserted characters so the intent (remove that
+    // region) is honoured.
+    () => {
+      const op1 = del(2, 5);    // delete "llo w"
+      const op2 = ins(4, 'XY'); // insert inside op1's range
+
+      const op1p = transform(op1, op2);
+      expect(op1p.position).toBe(2);   // start unchanged — insert is after start
+      expect(op1p.length).toBe(7);     // 5 + 2 (expanded to swallow new chars)
+    }
+  );
+});
+
 describe('transform — delete vs delete', () => {
   test(
     'concurrent non-overlapping deletes: op1 entirely before op2',
