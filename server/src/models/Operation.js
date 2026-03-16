@@ -22,7 +22,7 @@ const opComponentSchema = new mongoose.Schema(
 
 const operationSchema = new mongoose.Schema({
   sessionId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Session',
     required: true,
     index: true,
