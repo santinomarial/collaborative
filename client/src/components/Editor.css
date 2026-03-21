@@ -1,0 +1,73 @@
+.editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid transparent;
+}
+
+.editor-shell.dark  .editor-toolbar { background: #21252b; border-color: #181a1f; }
+.editor-shell.light .editor-toolbar { background: #f0f0f0; border-color: #d0d0d0; }
+
+.lang-select {
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.editor-shell.dark  .lang-select {
+  background: #2c313a;
+  color: #abb2bf;
+  border-color: #3e4451;
+}
+.editor-shell.light .lang-select {
+  background: #fff;
+  color: #333;
+  border-color: #ccc;
+}
+
+.theme-toggle {
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 14px;
+  cursor: pointer;
+  background: transparent;
+  line-height: 1;
+}
+
+.editor-shell.dark  .theme-toggle { color: #abb2bf; border-color: #3e4451; }
+.editor-shell.light .theme-toggle { color: #333;    border-color: #ccc;    }
+
+.theme-toggle:hover { opacity: 0.75; }
+
+/* ── CodeMirror container ────────────────────────────────────────────────── */
+.editor-container {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0; /* critical for flex children with overflow */
+}
+
+/* Make CodeMirror itself fill the container */
+.editor-container .cm-editor {
+  height: 100%;
+}
+
+.editor-container .cm-scroller {
+  overflow: auto;
+}
