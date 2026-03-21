@@ -1,39 +1,83 @@
 const WebSocket = require('ws');
+const redis = require('../services/RedisService');
 
 const PING_INTERVAL_MS = 15_000;
 const PONG_TIMEOUT_MS = 5_000;
 
 class ConnectionManager {
   constructor() {
-    // sessionId (string) → Set<WebSocket>
+    // sessionId → Set<WebSocket>
     this._sessions = new Map();
+    // sessionId → Redis onMessage callback (kept so we can unsubscribe later)
+    this._redisCallbacks = new Map();
     this._pingInterval = null;
   }
 
-  /** Register a socket for a session. Stores userId on the ws object. */
-  add(sessionId, ws, userId) {
+  // -------------------------------------------------------------------------
+  // Connect / disconnect
+  // -------------------------------------------------------------------------
+
+  /**
+   * Register a socket, update Redis presence, subscribe to the session's
+   * Redis channel (once per session per process), then broadcast presence.
+   */
+  async add(sessionId, ws, userId, userMeta) {
     ws.userId = userId;
     ws.isAlive = true;
 
-    if (!this._sessions.has(sessionId)) {
-      this._sessions.set(sessionId, new Set());
-    }
-    this._sessions.get(sessionId).add(ws);
-  }
+    const isFirstLocal = !this._sessions.has(sessionId);
 
-  /** Remove a socket from its session. Cleans up empty session entries. */
-  remove(sessionId, ws) {
-    const sockets = this._sessions.get(sessionId);
-    if (!sockets) return;
-    sockets.delete(ws);
-    if (sockets.size === 0) this._sessions.delete(sessionId);
+    if (isFirstLocal) {
+      this._sessions.set(sessionId, new Set());
+
+      // Subscribe once; fan messages out to all local sockets.
+      const cb = (payload) => this.broadcast(sessionId, payload);
+      this._redisCallbacks.set(sessionId, cb);
+      await redis.subscribeToSession(sessionId, cb);
+    }
+
+    this._sessions.get(sessionId).add(ws);
+
+    // Presence
+    await redis.userJoined(sessionId, userId, userMeta);
+    await this._broadcastPresence(sessionId);
   }
 
   /**
-   * Send a message to all sockets in a session, optionally skipping one.
-   * @param {string} sessionId
-   * @param {object} message  – will be JSON-serialised
-   * @param {WebSocket|null} excludeWs
+   * Deregister a socket, update Redis presence, broadcast presence.
+   * Unsubscribes from Redis when the last local socket for the session leaves.
+   */
+  async remove(sessionId, ws) {
+    const sockets = this._sessions.get(sessionId);
+    if (!sockets) return;
+
+    sockets.delete(ws);
+
+    // Presence: only remove the user from Redis if they have no other sockets
+    // open for this session in this process.
+    const stillHere = [...sockets].some((s) => s.userId === ws.userId);
+    if (!stillHere) {
+      await redis.userLeft(sessionId, ws.userId);
+    }
+
+    if (sockets.size === 0) {
+      this._sessions.delete(sessionId);
+      const cb = this._redisCallbacks.get(sessionId);
+      this._redisCallbacks.delete(sessionId);
+      await redis.unsubscribeFromSession(sessionId, cb);
+    }
+
+    // Broadcast updated presence to whoever remains (may be empty — no-op)
+    await this._broadcastPresence(sessionId);
+  }
+
+  // -------------------------------------------------------------------------
+  // Messaging
+  // -------------------------------------------------------------------------
+
+  /**
+   * Send to all open sockets in this session in this process, optionally
+   * excluding one (the sender).
    */
   broadcast(sessionId, message, excludeWs = null) {
     const sockets = this._sessions.get(sessionId);
@@ -48,15 +92,21 @@ class ConnectionManager {
     }
   }
 
-  /**
-   * Start the heartbeat loop.
-   * Every PING_INTERVAL_MS we:
-   *   1. Mark all sockets as not alive.
-   *   2. Send { type: "ping" }.
-   *   3. Schedule a PONG_TIMEOUT_MS follow-up; any socket still dead is terminated.
-   */
+  // -------------------------------------------------------------------------
+  // Presence helpers
+  // -------------------------------------------------------------------------
+
+  async _broadcastPresence(sessionId) {
+    const users = await redis.getPresence(sessionId);
+    this.broadcast(sessionId, { type: 'presence', payload: { users } });
+  }
+
+  // -------------------------------------------------------------------------
+  // Heartbeat
+  // -------------------------------------------------------------------------
+
   startHeartbeat() {
-    if (this._pingInterval) return; // already running
+    if (this._pingInterval) return;
 
     this._pingInterval = setInterval(() => {
       for (const [sessionId, sockets] of this._sessions) {
@@ -65,14 +115,11 @@ class ConnectionManager {
             this.remove(sessionId, ws);
             continue;
           }
-
-          // Mark dead before the ping; pong handler sets it back to true.
           ws.isAlive = false;
           ws.send(JSON.stringify({ type: 'ping' }));
         }
       }
 
-      // After PONG_TIMEOUT_MS, terminate any socket that still hasn't responded.
       setTimeout(() => {
         for (const [sessionId, sockets] of this._sessions) {
           for (const ws of sockets) {
@@ -94,4 +141,4 @@ class ConnectionManager {
   }
 }
 
-module.exports = new ConnectionManager(); // singleton
+module.exports = new ConnectionManager();

@@ -66,8 +66,14 @@ server.on('upgrade', (req, socket, head) => {
   });
 });
 
-wss.on('connection', (ws, _req, sessionId, user) => {
-  connectionManager.add(sessionId, ws, user.userId);
+wss.on('connection', async (ws, _req, sessionId, user) => {
+  const userMeta = {
+    userId:      user.userId,
+    displayName: user.displayName,
+    avatarColor: user.avatarColor,
+  };
+
+  await connectionManager.add(sessionId, ws, user.userId, userMeta);
 
   ws.send(JSON.stringify({ type: 'connected', payload: { sessionId, user } }));
 
@@ -76,12 +82,14 @@ wss.on('connection', (ws, _req, sessionId, user) => {
   });
 
   ws.on('close', () => {
-    connectionManager.remove(sessionId, ws);
+    connectionManager.remove(sessionId, ws).catch((err) =>
+      console.error(`ws close cleanup error [session=${sessionId}]`, err.message)
+    );
   });
 
   ws.on('error', (err) => {
     console.error(`ws error [session=${sessionId}]`, err.message);
-    connectionManager.remove(sessionId, ws);
+    connectionManager.remove(sessionId, ws).catch(() => {});
   });
 });
 
