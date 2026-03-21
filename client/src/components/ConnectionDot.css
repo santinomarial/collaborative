@@ -1,0 +1,16 @@
+.conn-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.conn-dot--connected    { background: #4ade80; box-shadow: 0 0 4px #4ade80; }
+.conn-dot--reconnecting { background: #facc15; box-shadow: 0 0 4px #facc15; animation: conn-pulse 1s ease-in-out infinite; }
+.conn-dot--disconnected { background: #f87171; box-shadow: 0 0 4px #f87171; }
+
+@keyframes conn-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
