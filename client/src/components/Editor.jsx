@@ -6,32 +6,29 @@ import { ConnectionDot }    from './ConnectionDot';
 import './Editor.css';
 
 export function Editor({
-  initialDoc   = '',
   language: initialLang = 'javascript',
-  sessionId,
-  token,
+  sessionId = null,
+  wsClient  = null,
   onChange,
 }) {
   const [language, setLanguage] = useState(initialLang);
   const [theme, setTheme]       = useState('dark');
 
-  const { editorRef }            = useEditor({ initialDoc, language, theme, onChange });
-  const { status, users }        = useWebSocket({ sessionId, token });
+  const { editorRef } = useEditor({ language, theme, onChange, wsClient, sessionId });
+  const { status, users } = useWebSocket(wsClient);
 
   return (
     <div className={`editor-shell ${theme}`}>
       <div className="editor-toolbar">
-        {/* Left side: connection status + user count */}
         <div className="toolbar-left">
           <ConnectionDot status={status} />
           {users.length > 0 && (
-            <span className="user-count" title={users.map(u => u.displayName).join(', ')}>
+            <span className="user-count" title={users.map((u) => u.displayName).join(', ')}>
               {users.length} online
             </span>
           )}
         </div>
 
-        {/* Right side: controls */}
         <div className="toolbar-right">
           <select
             className="lang-select"

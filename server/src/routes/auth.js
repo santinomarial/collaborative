@@ -145,6 +145,18 @@ router.post('/guest', (req, res) => {
   return res.json({ displayName, avatarColor: avatarColor ?? null, role: 'guest' });
 });
 
+// GET /api/auth/token — returns the JWT so the browser can use it for WebSocket auth
+router.get('/token', (req, res) => {
+  const token = req.cookies?.token;
+  if (!token) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ token });
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+});
+
 // POST /api/auth/logout
 router.post('/logout', (_req, res) => {
   res.clearCookie('token', { httpOnly: true, sameSite: 'lax' });

@@ -1,65 +1,35 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { WSClient } from './WSClient';
+import { useEffect, useState, useCallback } from 'react';
 
 /**
- * @typedef {'connected'|'reconnecting'|'disconnected'} WsStatus
- */
-
-/**
- * React hook that manages a WSClient lifecycle.
+ * React hook that subscribes to an existing WSClient instance.
+ * Lifecycle (connect / disconnect) is managed by the caller (App.jsx).
  *
- * Reads sessionId and token from:
- *   1. The URL search params  (?sessionId=xxx&token=yyy)
- *   2. Fallback props passed to the hook
- *
- * @param {{ sessionId?: string, token?: string, baseUrl?: string }} [options]
+ * @param {import('./WSClient').WSClient | null} wsClient
  * @returns {{
- *   sendOp:    (revision: number, ops: object[]) => void,
- *   sendCursor:(cursor: object) => void,
- *   status:    WsStatus,
- *   users:     object[],
+ *   sendOp:     (revision: number, ops: object[]) => void,
+ *   sendCursor: (cursor: object) => void,
+ *   status:     'connected'|'reconnecting'|'disconnected',
+ *   users:      object[],
  * }}
  */
-export function useWebSocket({ sessionId: propSid, token: propToken, baseUrl } = {}) {
-  // Resolve sessionId + token from URL params first, props as fallback
-  const params    = new URLSearchParams(window.location.search);
-  const sessionId = propSid   ?? params.get('sessionId') ?? null;
-  const token     = propToken ?? params.get('token')     ?? null;
-
-  const clientRef = useRef(null);
-
-  const [status, setStatus] = useState(/** @type {WsStatus} */ ('disconnected'));
+export function useWebSocket(wsClient) {
+  const [status, setStatus] = useState('disconnected');
   const [users,  setUsers]  = useState([]);
 
   useEffect(() => {
-    if (!sessionId || !token) return;
+    if (!wsClient) return;
 
-    const client = new WSClient(sessionId, token, baseUrl);
-    clientRef.current = client;
-
-    // ── Status ────────────────────────────────────────────────────────────
-    client.on('status', setStatus);
-
-    // ── Presence ──────────────────────────────────────────────────────────
-    client.on('presence', (payload) => {
-      setUsers(payload?.users ?? []);
-    });
-
-    client.connect();
+    const unsubStatus   = wsClient.on('status',   setStatus);
+    const unsubPresence = wsClient.on('presence',  (p) => setUsers(p?.users ?? []));
 
     return () => {
-      client.disconnect();
-      clientRef.current = null;
+      unsubStatus();
+      unsubPresence();
     };
-  }, [sessionId, token, baseUrl]);
+  }, [wsClient]);
 
-  const sendOp = useCallback((revision, ops) => {
-    clientRef.current?.sendOp(revision, ops);
-  }, []);
-
-  const sendCursor = useCallback((cursor) => {
-    clientRef.current?.sendCursor(cursor);
-  }, []);
+  const sendOp     = useCallback((revision, ops) => wsClient?.sendOp(revision, ops),  [wsClient]);
+  const sendCursor = useCallback((cursor)          => wsClient?.sendCursor(cursor),    [wsClient]);
 
   return { sendOp, sendCursor, status, users };
 }

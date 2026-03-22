@@ -1,20 +1,20 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { Compartment, EditorState }        from '@codemirror/state';
-import { EditorView, lineNumbers, keymap } from '@codemirror/view';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { Compartment, EditorState }                  from '@codemirror/state';
+import { EditorView, lineNumbers, keymap }           from '@codemirror/view';
 import {
   defaultKeymap,
   historyKeymap,
   history,
-}                                          from '@codemirror/commands';
+}                                                    from '@codemirror/commands';
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
-}                                          from '@codemirror/language';
-import { oneDark }                         from '@codemirror/theme-one-dark';
-import { getLanguageExtension }            from './languages';
+}                                                    from '@codemirror/language';
+import { oneDark }                                   from '@codemirror/theme-one-dark';
+import { getLanguageExtension }                      from './languages';
+import { createCollabExtension }                     from './CollabExtension';
 
-// Light base theme: give the editor a white background and dark text so it
-// looks intentional rather than inheriting random container colours.
+// ── Themes ────────────────────────────────────────────────────────────────────
 const lightTheme = EditorView.theme(
   {
     '&': { background: '#ffffff', color: '#1a1a1a', height: '100%' },
@@ -38,26 +38,67 @@ const darkTheme = [
   }),
 ];
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+
 /**
- * @param {{ initialDoc?: string, language?: string, theme?: 'dark'|'light', onChange?: (doc: string) => void }} options
- * @returns {{ editorRef: React.RefObject, updateDoc: (content: string) => void }}
+ * @param {{
+ *   language?:        string,
+ *   theme?:           'dark'|'light',
+ *   onChange?:        (doc: string) => void,
+ *   wsClient?:        import('../ws/WSClient').WSClient | null,
+ *   sessionId?:       string | null,
+ * }} options
  */
-export function useEditor({ initialDoc = '', language = 'javascript', theme = 'dark', onChange } = {}) {
+export function useEditor({
+  language  = 'javascript',
+  theme     = 'dark',
+  onChange,
+  wsClient  = null,
+  sessionId = null,
+} = {}) {
   const editorRef    = useRef(null);
   const viewRef      = useRef(null);
   const onChangeRef  = useRef(onChange);
   const langComp     = useRef(new Compartment());
   const themeComp    = useRef(new Compartment());
 
-  // Keep onChange ref current without recreating the editor
+  // { doc: string, revision: number } loaded from the server, or null while pending
+  const [sessionData, setSessionData] = useState(null);
+
   onChangeRef.current = onChange;
 
-  // ── Create / destroy view ─────────────────────────────────────────────────
+  // ── Fetch initial snapshot ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!sessionId) {
+      setSessionData({ doc: '', revision: 0 });
+      return;
+    }
+
+    fetch(`${API_BASE}/api/sessions/${sessionId}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        setSessionData({
+          doc:      data.snapshot ?? '',
+          revision: data.revision ?? 0,
+        });
+      })
+      .catch((err) => {
+        console.error('[useEditor] snapshot fetch failed', err);
+        setSessionData({ doc: '', revision: 0 });
+      });
+  }, [sessionId]);
+
+  // ── Create / destroy EditorView ────────────────────────────────────────────
+  // Waits until sessionData is available so the initial revision is correct.
+  useEffect(() => {
+    if (!editorRef.current || sessionData === null) return;
+
+    const collabExt = wsClient
+      ? createCollabExtension(wsClient, sessionData.revision)
+      : [];
 
     const state = EditorState.create({
-      doc: initialDoc,
+      doc: sessionData.doc,
       extensions: [
         history(),
         lineNumbers(),
@@ -69,6 +110,7 @@ export function useEditor({ initialDoc = '', language = 'javascript', theme = 'd
           if (update.docChanged) onChangeRef.current?.(update.state.doc.toString());
         }),
         EditorView.theme({ '&': { height: '100%' } }),
+        collabExt,
       ],
     });
 
@@ -80,7 +122,7 @@ export function useEditor({ initialDoc = '', language = 'javascript', theme = 'd
       viewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally only on mount
+  }, [sessionData]); // re-create only if session changes
 
   // ── Reconfigure language ──────────────────────────────────────────────────
   useEffect(() => {
