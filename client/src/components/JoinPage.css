@@ -1,0 +1,160 @@
+.join-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  background: #1a1d23;
+  padding: 24px;
+}
+
+.join-hero {
+  text-align: center;
+}
+
+.join-heading {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #e8eaed;
+  letter-spacing: -0.5px;
+}
+
+.join-sub {
+  margin: 0;
+  font-size: 14px;
+  color: #5c6370;
+}
+
+/* ── Card row ─────────────────────────────────────────────────────────────── */
+
+.join-cards {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  background: #21252b;
+  border: 1px solid #3e4451;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 640px;
+}
+
+.join-divider {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-size: 11px;
+  color: #3e4451;
+  position: relative;
+}
+.join-divider::before,
+.join-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: calc(50% - 14px);
+  background: #3e4451;
+}
+.join-divider::before { top: 0; }
+.join-divider::after  { bottom: 0; }
+
+/* ── Panel ────────────────────────────────────────────────────────────────── */
+
+.join-panel {
+  flex: 1;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #abb2bf;
+}
+
+.panel-sub {
+  margin: -8px 0 0;
+  font-size: 12px;
+  color: #5c6370;
+  line-height: 1.5;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+
+.tab-row {
+  display: flex;
+  gap: 0;
+  background: #2c313a;
+  border-radius: 5px;
+  padding: 2px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: #5c6370;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn.active {
+  background: #3e4451;
+  color: #abb2bf;
+}
+.tab-btn:not(.active):hover { color: #abb2bf; }
+
+/* ── Form elements ────────────────────────────────────────────────────────── */
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.join-input {
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid #3e4451;
+  background: #2c313a;
+  color: #abb2bf;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.join-input::placeholder { color: #4b5263; }
+.join-input:focus { border-color: #528bff; }
+
+.join-btn {
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  margin-top: 2px;
+}
+.join-btn:disabled { opacity: 0.45; cursor: default; }
+
+.join-btn.primary  { background: #528bff; color: #fff; }
+.join-btn.secondary { background: #2c313a; color: #abb2bf; border: 1px solid #3e4451; }
+.join-btn.primary:not(:disabled):hover  { background: #4272d4; }
+.join-btn.secondary:not(:disabled):hover { background: #3e4451; }
+
+.join-error {
+  margin: 0;
+  font-size: 12px;
+  color: #e06c75;
+}

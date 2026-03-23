@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { Compartment, EditorState }                  from '@codemirror/state';
 import { EditorView, lineNumbers, keymap }           from '@codemirror/view';
+// EditorView.editable is a Facet — reconfigured via Compartment for readOnly
 import {
   defaultKeymap,
   historyKeymap,
@@ -67,6 +68,7 @@ export function useEditor({
   onChange,
   wsClient  = null,
   sessionId = null,
+  readOnly  = false,
 } = {}) {
   const editorRef    = useRef(null);
   const viewRef      = useRef(null);
@@ -74,6 +76,7 @@ export function useEditor({
   const wsClientRef  = useRef(wsClient);       // stable ref — avoids stale closures
   const langComp     = useRef(new Compartment());
   const themeComp    = useRef(new Compartment());
+  const editableComp = useRef(new Compartment());
 
   // Map of userId → latest cursor payload; updated on cursor + presence events.
   const remoteCursorsRef = useRef(new Map());
@@ -133,6 +136,7 @@ export function useEditor({
         syntaxHighlighting(defaultHighlightStyle),
         langComp.current.of(getLanguageExtension(language)),
         themeComp.current.of(theme === 'dark' ? darkTheme : lightTheme),
+        editableComp.current.of(EditorView.editable.of(!readOnly)),
         EditorView.theme({ '&': { height: '100%' } }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
@@ -179,6 +183,13 @@ export function useEditor({
       effects: themeComp.current.reconfigure(theme === 'dark' ? darkTheme : lightTheme),
     });
   }, [theme]);
+
+  // ── Reconfigure readOnly ────────────────────────────────────────────────────
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: editableComp.current.reconfigure(EditorView.editable.of(!readOnly)),
+    });
+  }, [readOnly]);
 
   // ── Remote cursor / presence subscriptions ──────────────────────────────────
   useEffect(() => {
