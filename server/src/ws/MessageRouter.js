@@ -1,6 +1,7 @@
 const connectionManager = require('./ConnectionManager');
 const OpHandler = require('./handlers/OpHandler');
 const CursorHandler = require('./handlers/CursorHandler');
+const AdminHandler = require('./handlers/AdminHandler');
 
 const ERROR_FRAME = JSON.stringify({ type: 'error', payload: { code: 'INVALID_FRAME' } });
 
@@ -34,6 +35,10 @@ function dispatch(ws, sessionId, user, rawMessage) {
 
     case 'cursor':
       CursorHandler.handle(ws, sessionId, user, payload);
+      break;
+
+    case 'admin':
+      AdminHandler.handle(ws, sessionId, user, payload);
       break;
 
     default:

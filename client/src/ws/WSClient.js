@@ -81,6 +81,12 @@ export class WSClient {
     }
   }
 
+  send(type, payload) {
+    if (this._connected) {
+      this._sendFrame({ type, payload });
+    }
+  }
+
   /**
    * Subscribe to a message type.
    * Special type "status" emits 'connected' | 'reconnecting' | 'disconnected'.

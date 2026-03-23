@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams, Navigate } from 'react-router-dom';
+import { useParams, useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { WSClient }          from '../ws/WSClient';
 import { useWebSocket }      from '../ws/useWebSocket';
 import { Editor }            from '../components/Editor';
@@ -26,6 +26,7 @@ function parseJwt(token) {
 export function SessionPage() {
   const { id: sessionId }        = useParams();
   const [searchParams]           = useSearchParams();
+  const navigate                 = useNavigate();
 
   // Token: prefer URL param so magic links work; fall back to cookie endpoint
   const [token,        setToken]        = useState(() => searchParams.get('token'));
@@ -75,6 +76,20 @@ export function SessionPage() {
 
   const { status, users } = useWebSocket(wsClient);
 
+  // Listen for server-initiated kick
+  useEffect(() => {
+    if (!wsClient) return;
+    return wsClient.on('error', (payload) => {
+      if (payload?.code === 'KICKED') {
+        navigate('/?kicked=1', { replace: true });
+      }
+    });
+  }, [wsClient, navigate]);
+
+  function onKick(targetUserId) {
+    wsClient?.send('admin', { action: 'kick', targetUserId });
+  }
+
   const jwtPayload = useMemo(() => (token ? parseJwt(token) : null), [token]);
   const isOwner = !!(
     jwtPayload?.userId &&
@@ -119,6 +134,9 @@ export function SessionPage() {
           session={session}
           isOpen={panelOpen}
           onToggle={() => setPanelOpen((o) => !o)}
+          viewerIsOwner={isOwner}
+          viewerUserId={jwtPayload?.userId ?? null}
+          onKick={onKick}
         />
       </div>
 

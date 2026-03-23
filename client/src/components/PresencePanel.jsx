@@ -30,7 +30,7 @@ function Avatar({ displayName, avatarColor }) {
 
 // ── Single user row ───────────────────────────────────────────────────────────
 
-function UserRow({ user, isOwner, isTyping, lastSeen }) {
+function UserRow({ user, isOwner, isTyping, lastSeen, canKick, onKick }) {
   return (
     <li className="presence-user">
       <Avatar displayName={user.displayName} avatarColor={user.avatarColor} />
@@ -44,6 +44,16 @@ function UserRow({ user, isOwner, isTyping, lastSeen }) {
           <span className="presence-last-seen">{timeAgo(lastSeen)}</span>
         )}
       </div>
+      {canKick && (
+        <button
+          className="kick-btn"
+          onClick={() => onKick(user.userId)}
+          title={`Remove ${user.displayName ?? 'user'}`}
+          aria-label={`Kick ${user.displayName ?? 'user'}`}
+        >
+          ×
+        </button>
+      )}
     </li>
   );
 }
@@ -55,14 +65,17 @@ const REFRESH_INTERVAL_MS = 5_000;
 
 /**
  * @param {{
- *   users:     object[],
- *   wsClient:  object | null,
- *   session:   object | null,
- *   isOpen:    boolean,
- *   onToggle:  () => void,
+ *   users:          object[],
+ *   wsClient:       object | null,
+ *   session:        object | null,
+ *   isOpen:         boolean,
+ *   onToggle:       () => void,
+ *   viewerIsOwner:  boolean,
+ *   viewerUserId:   string | null,
+ *   onKick:         (targetUserId: string) => void,
  * }} props
  */
-export function PresencePanel({ users = [], wsClient, session, isOpen, onToggle }) {
+export function PresencePanel({ users = [], wsClient, session, isOpen, onToggle, viewerIsOwner = false, viewerUserId = null, onKick }) {
   // userId → timestamp of last cursor/activity event
   const lastSeenRef  = useRef(new Map());
   const [, forceUpdate] = useState(0); // tick to trigger re-render every 5s
@@ -116,6 +129,7 @@ export function PresencePanel({ users = [], wsClient, session, isOpen, onToggle 
               {users.map((user) => {
                 const ls  = lastSeenRef.current.get(user.userId);
                 const isTyping = ls != null && (now - ls) < TYPING_TIMEOUT_MS;
+                const canKick = viewerIsOwner && user.userId !== ownerId && user.userId !== viewerUserId;
                 return (
                   <UserRow
                     key={user.userId}
@@ -123,6 +137,8 @@ export function PresencePanel({ users = [], wsClient, session, isOpen, onToggle 
                     isOwner={user.userId === ownerId}
                     isTyping={isTyping}
                     lastSeen={ls}
+                    canKick={canKick}
+                    onKick={onKick}
                   />
                 );
               })}

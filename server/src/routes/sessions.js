@@ -4,6 +4,7 @@ const { requireAuth } = require('../middleware/auth');
 const Session = require('../models/Session');
 const Operation = require('../models/Operation');
 const { createSession, getSession } = require('../services/SessionService');
+const redis = require('../services/RedisService');
 
 const router = express.Router();
 
@@ -151,6 +152,56 @@ router.patch('/:id', async (req, res) => {
     return res.json(updated);
   } catch (err) {
     console.error('patch session error', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/sessions/:id/restore — owner only
+// Body: { revision: number, snapshot: string }
+// The client sends the snapshot it has already reconstructed from local replay,
+// which avoids re-doing the replay server-side and sidesteps the checkpoint gap.
+const restoreSchema = z.object({
+  revision: z.number().int().min(0),
+  snapshot: z.string(),
+});
+
+router.patch('/:id/restore', async (req, res) => {
+  const parsed = restoreSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
+
+  const { revision: targetRevision, snapshot } = parsed.data;
+
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    if (session.owner.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    // Update the session to the restored state
+    const updated = await Session.findByIdAndUpdate(
+      req.params.id,
+      { snapshot, revision: targetRevision },
+      { returnDocument: 'after' }
+    );
+
+    // Prune operations that occurred after the target revision
+    await Operation.deleteMany({
+      sessionId: req.params.id,
+      revision:  { $gt: targetRevision },
+    });
+
+    // Tell every connected client (in all processes) to reload so they show the
+    // restored snapshot rather than diverging with stale content.
+    await redis.publishOp(req.params.id, {
+      type:    'reload',
+      payload: { reason: 'restore', revision: targetRevision },
+    });
+
+    return res.json({ ok: true, revision: updated.revision });
+  } catch (err) {
+    console.error('restore error', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

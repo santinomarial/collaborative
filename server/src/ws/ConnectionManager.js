@@ -102,6 +102,30 @@ class ConnectionManager {
   }
 
   // -------------------------------------------------------------------------
+  // Kick
+  // -------------------------------------------------------------------------
+
+  /**
+   * Send a KICKED error frame to every socket belonging to targetUserId in
+   * this session, then terminate those connections.
+   */
+  kickUser(sessionId, targetUserId) {
+    const sockets = this._sessions.get(sessionId);
+    if (!sockets) return;
+
+    const KICKED_FRAME = JSON.stringify({ type: 'error', payload: { code: 'KICKED' } });
+
+    for (const ws of sockets) {
+      if (ws.userId === targetUserId) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(KICKED_FRAME);
+        }
+        ws.terminate();
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Heartbeat
   // -------------------------------------------------------------------------
 

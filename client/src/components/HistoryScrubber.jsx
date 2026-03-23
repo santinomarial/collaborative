@@ -179,11 +179,20 @@ export function HistoryScrubber({ isOpen, onClose, session, isOwner }) {
   const max       = operations.length;
   const currentOp = sliderIdx > 0 ? operations[sliderIdx - 1] : null;
 
-  function handleRestore() {
-    // Stub — wired in step 14b
-    // Will PATCH /api/sessions/:id with snapshot = states[sliderIdx]
-    // and revision = currentOp.revision, then close the drawer.
-    alert(`Restore to revision ${currentOp?.revision} — not yet implemented`);
+  async function handleRestore() {
+    if (!currentOp || !session?._id) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/sessions/${session._id}/restore`, {
+        method:      'PATCH',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ revision: currentOp.revision, snapshot: states[sliderIdx] }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      window.location.reload();
+    } catch (err) {
+      console.error('[HistoryScrubber] restore failed', err);
+    }
   }
 
   return (
