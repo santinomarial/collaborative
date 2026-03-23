@@ -4,22 +4,33 @@
 /**
  * hammer.js — WebSocket load tester for the collaborative editor.
  *
- * Usage:
- *   node hammer.js --session=<sessionId> --token=<guestJwt> \
+ * Usage (single shared token — fine for 1 user; hits per-user rate limit fast
+ * when --users > ~5, since all clients share the same userId):
+ *
+ *   node hammer.js --session=<sessionId> --token=<jwt> \
  *                  [--users=30] [--duration=60] [--host=ws://localhost:3001]
+ *
+ * Usage (tokens file — one JWT per line, round-robined across clients;
+ * required to bypass the per-userId rate limit at high concurrency):
+ *
+ *   node hammer.js --session=<sessionId> --tokens-file=./tokens.txt \
+ *                  [--users=30] [--duration=60] [--host=ws://localhost:3001]
+ *
+ * Generate a tokens file with: node setup.js --users=30 --base=http://localhost:3001
  *
  * Requires:  npm install  (installs the ws package in this directory)
  */
 
 const { WebSocket } = require('ws');
 const { performance } = require('perf_hooks');
+const fs = require('fs');
 
 // ── CLI ─────────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
   const out = {};
   for (const arg of argv) {
-    const m = arg.match(/^--([^=]+)=(.+)$/);
+    const m = arg.match(/^--([^=]+)=(.*)$/);
     if (m) out[m[1]] = m[2];
   }
   return out;
@@ -29,16 +40,36 @@ const args = parseArgs(process.argv.slice(2));
 
 const NUM_USERS  = parseInt(args.users    ?? '30',                  10);
 const SESSION_ID = args.session;
-const TOKEN      = args.token;
 const DURATION_S = parseInt(args.duration ?? '60',                  10);
 const WS_BASE    = args.host              ?? 'ws://localhost:3001';
 
-if (!SESSION_ID || !TOKEN) {
+// Build the token pool: either a single token (repeated) or one-per-line file
+let TOKEN_POOL;
+if (args['tokens-file']) {
+  TOKEN_POOL = fs.readFileSync(args['tokens-file'], 'utf8')
+    .split('\n').map((l) => l.trim()).filter(Boolean);
+  if (TOKEN_POOL.length === 0) {
+    console.error('tokens-file is empty');
+    process.exit(1);
+  }
+} else if (args.token) {
+  TOKEN_POOL = [args.token];
+} else {
   console.error(
     '\nUsage: node hammer.js --session=<sessionId> --token=<jwt>\n' +
-    '                      [--users=30] [--duration=60] [--host=ws://localhost:3001]\n'
+    '                      [--users=30] [--duration=60] [--host=ws://localhost:3001]\n' +
+    '       node hammer.js --session=<sessionId> --tokens-file=./tokens.txt [...]\n'
   );
   process.exit(1);
+}
+
+if (!SESSION_ID) {
+  console.error('--session is required');
+  process.exit(1);
+}
+
+function tokenFor(clientIndex) {
+  return TOKEN_POOL[clientIndex % TOKEN_POOL.length];
 }
 
 // ── Per-client stats ─────────────────────────────────────────────────────────
@@ -71,7 +102,7 @@ const SEND_INTERVAL_MS = 500;
 const BACKOFF_BASE_MS  = 500;
 const BACKOFF_MAX_MS   = 15_000;
 
-function spawnClient(stats) {
+function spawnClient(stats, token) {
   let ws;
   let revision    = 0;
   let docLen      = 0;     // estimated local doc length (inserts only, no OT)
@@ -89,7 +120,7 @@ function spawnClient(stats) {
   function connect() {
     if (stopped) return;
 
-    ws = new WebSocket(`${WS_BASE}/sessions/${SESSION_ID}?token=${TOKEN}`);
+    ws = new WebSocket(`${WS_BASE}/sessions/${SESSION_ID}?token=${token}`);
 
     ws.on('open', () => {
       if (attempt > 0) stats.reconnects++;
@@ -184,7 +215,7 @@ function pct(sorted, p) {
 }
 
 function fmtMs(n) {
-  return Number.isNaN(n) ? '   —  ' : `${n.toFixed(1)} ms`;
+  return (n == null || Number.isNaN(n)) ? '   —  ' : `${n.toFixed(1)} ms`;
 }
 
 function pad(s, w) {
@@ -242,7 +273,7 @@ const clientHandles = [];
 
 // Stagger connects by 30 ms each to avoid a thundering herd on accept()
 allStats.forEach((stats, i) => {
-  setTimeout(() => clientHandles.push(spawnClient(stats)), i * 30);
+  setTimeout(() => clientHandles.push(spawnClient(stats, tokenFor(i))), i * 30);
 });
 
 const startTime = performance.now();
