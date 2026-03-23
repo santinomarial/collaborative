@@ -115,6 +115,10 @@
 /* Lock state */
 .lock-btn.locked { color: #e5c07b; border-color: #e5c07b44; }
 
+/* Active/toggled state (e.g. History button when drawer is open) */
+.toolbar--dark  .tb-btn.active { background: #2c313a; color: #61afef; border-color: #528bff44; }
+.toolbar--light .tb-btn.active { background: #e0e8ff; color: #3060c0; border-color: #528bff88; }
+
 /* Share toast flash */
 .tb-btn:has(+ .tb-btn) { } /* no-op; toast handled via JS */
 

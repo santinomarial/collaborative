@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Navigate } from 'react-router-dom';
-import { WSClient }       from '../ws/WSClient';
-import { useWebSocket }   from '../ws/useWebSocket';
-import { Editor }         from '../components/Editor';
-import { Toolbar }        from '../components/Toolbar';
-import { PresencePanel }  from '../components/PresencePanel';
+import { WSClient }          from '../ws/WSClient';
+import { useWebSocket }      from '../ws/useWebSocket';
+import { Editor }            from '../components/Editor';
+import { Toolbar }           from '../components/Toolbar';
+import { PresencePanel }     from '../components/PresencePanel';
+import { HistoryScrubber }   from '../components/HistoryScrubber';
 import './SessionPage.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -33,6 +34,7 @@ export function SessionPage() {
   const [language,     setLanguage]     = useState('javascript');
   const [theme,        setTheme]        = useState('dark');
   const [panelOpen,    setPanelOpen]    = useState(true);
+  const [historyOpen,  setHistoryOpen]  = useState(false);
   const [authError,    setAuthError]    = useState(null);
 
   // Resolve token from cookie if not in URL
@@ -54,7 +56,6 @@ export function SessionPage() {
       .then((r) => r.json())
       .then((data) => {
         setSession(data);
-        // Prefer session's saved language as default
         if (data.language) setLanguage(data.language);
       })
       .catch(console.error);
@@ -74,7 +75,6 @@ export function SessionPage() {
 
   const { status, users } = useWebSocket(wsClient);
 
-  // Decode current user's id from token for owner check
   const jwtPayload = useMemo(() => (token ? parseJwt(token) : null), [token]);
   const isOwner = !!(
     jwtPayload?.userId &&
@@ -82,10 +82,8 @@ export function SessionPage() {
     String(jwtPayload.userId) === String(session.owner)
   );
 
-  // A locked session is read-only for non-owners
   const readOnly = (session?.isLocked ?? false) && !isOwner;
 
-  // Redirect to JoinPage if we couldn't get a token
   if (authError) {
     return <Navigate to={`/?sessionId=${sessionId}`} replace />;
   }
@@ -102,6 +100,8 @@ export function SessionPage() {
         token={token}
         status={status}
         onSessionUpdate={setSession}
+        historyOpen={historyOpen}
+        onHistoryToggle={() => setHistoryOpen((o) => !o)}
       />
 
       <div className="session-body">
@@ -121,6 +121,13 @@ export function SessionPage() {
           onToggle={() => setPanelOpen((o) => !o)}
         />
       </div>
+
+      <HistoryScrubber
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        session={session}
+        isOwner={isOwner}
+      />
     </div>
   );
 }

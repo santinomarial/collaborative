@@ -106,6 +106,8 @@ export function Toolbar({
   token,
   status,
   onSessionUpdate,
+  historyOpen,
+  onHistoryToggle,
 }) {
   const [toastMsg, setToastMsg] = useState('');
   const toastTimer = useRef(null);
@@ -209,6 +211,14 @@ export function Toolbar({
           title="Copy session link"
         >
           {toastMsg || 'Share'}
+        </button>
+
+        <button
+          className={`tb-btn ${historyOpen ? 'active' : ''}`}
+          onClick={onHistoryToggle}
+          title="Toggle history scrubber"
+        >
+          History
         </button>
 
         <button

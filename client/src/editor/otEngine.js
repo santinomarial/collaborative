@@ -1,5 +1,22 @@
 // Client-side mirror of server/src/ot/engine.js — pure functions, no deps.
 
+/**
+ * Apply a single op to a document string.
+ * Positions are clamped to doc bounds so stale history ops degrade gracefully.
+ */
+export function apply(document, op) {
+  if (op.type === 'insert') {
+    const pos = Math.min(Math.max(op.position ?? 0, 0), document.length);
+    return document.slice(0, pos) + (op.text ?? '') + document.slice(pos);
+  }
+  if (op.type === 'delete') {
+    const pos = Math.min(Math.max(op.position ?? 0, 0), document.length);
+    const end = Math.min(pos + (op.length ?? 0), document.length);
+    return document.slice(0, pos) + document.slice(end);
+  }
+  return document; // 'retain' and unknown types are no-ops
+}
+
 export function transform(op1, op2) {
   if (op1.type === 'insert' && op2.type === 'insert') return _ii(op1, op2);
   if (op1.type === 'insert' && op2.type === 'delete') return _id(op1, op2);
