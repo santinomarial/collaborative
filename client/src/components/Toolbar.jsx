@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { LANGUAGES }     from '../editor/languages';
 import { ConnectionDot } from './ConnectionDot';
+import { onP95Update }   from '../editor/rttTracker';
 import './Toolbar.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -111,6 +112,17 @@ export function Toolbar({
 }) {
   const [toastMsg, setToastMsg] = useState('');
   const toastTimer = useRef(null);
+
+  // Debug RTT badge — visible only when ?debug=1 is in the URL
+  const isDebug = useMemo(
+    () => new URLSearchParams(window.location.search).get('debug') === '1',
+    []
+  );
+  const [rttP95, setRttP95] = useState(null);
+  useEffect(() => {
+    if (!isDebug) return;
+    return onP95Update(setRttP95);
+  }, [isDebug]);
 
   function showToast(msg) {
     clearTimeout(toastTimer.current);
@@ -228,6 +240,12 @@ export function Toolbar({
         >
           {theme === 'dark' ? '☀' : '☽'}
         </button>
+
+        {isDebug && (
+          <span className="debug-badge" title="Rolling p95 op RTT">
+            {rttP95 != null ? `p95 ${rttP95.toFixed(0)}ms` : 'p95 —'}
+          </span>
+        )}
       </div>
     </div>
   );

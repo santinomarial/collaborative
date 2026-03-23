@@ -1,6 +1,7 @@
 import { Annotation, Transaction } from '@codemirror/state';
 import { ViewPlugin }               from '@codemirror/view';
 import { transform }                from './otEngine';
+import { recordRtt }                from './rttTracker';
 
 // ── Annotation to mark transactions that came from the network ────────────────
 // Used in two places:
@@ -81,7 +82,8 @@ export function createCollabExtension(wsClient, initialRevision = 0) {
 
         // Each entry: { revision: number, ops: op[] }
         // Represents ops we've sent but not yet received an ack for.
-        this._pending = [];
+        this._pending   = [];
+        this._sendTimes = []; // FIFO: performance.now() at send, one per pending op
 
         this._unsubAck = wsClient.on('ack', (p) => this._onAck(p));
         this._unsubOp  = wsClient.on('op',  (p) => this._onRemoteOp(p));
@@ -97,14 +99,22 @@ export function createCollabExtension(wsClient, initialRevision = 0) {
         const ops = changesToOps(update.changes);
         if (ops.length === 0) return;
 
-        const revision = this.clientRevision;
+        const revision  = this.clientRevision;
+        const sendTime  = performance.now();
         this._pending.push({ revision, ops });
+        this._sendTimes.push(sendTime);
         wsClient.sendOp(revision, ops);
       }
 
       // ── Ack received ───────────────────────────────────────────────────
       _onAck({ revision }) {
         this._pending.shift();          // FIFO — acks are ordered
+        const sendTime = this._sendTimes.shift();
+        if (sendTime != null) {
+          const rtt = performance.now() - sendTime;
+          console.debug('op RTT:', rtt.toFixed(1), 'ms');
+          recordRtt(rtt);
+        }
         this.clientRevision = revision;
       }
 

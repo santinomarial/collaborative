@@ -124,3 +124,14 @@
 
 /* Expiry dropdown — slightly wider */
 .expiry-select { min-width: 90px; }
+
+/* Debug RTT badge — shown only when ?debug=1 */
+.debug-badge {
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.toolbar--dark  .debug-badge { background: #2c313a; color: #e5c07b; border: 1px solid #3e4451; }
+.toolbar--light .debug-badge { background: #fff8e1; color: #8a6000; border: 1px solid #e0c040; }
