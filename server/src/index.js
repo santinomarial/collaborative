@@ -1,6 +1,7 @@
 require('dotenv').config();
 const http = require('http');
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
@@ -14,6 +15,9 @@ const { dispatch } = require('./ws/MessageRouter');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+
+app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
