@@ -14,6 +14,8 @@ import {
 import {
   syntaxHighlighting,
   HighlightStyle,
+  indentUnit,
+  indentOnInput,
 }                                                    from '@codemirror/language';
 import { tags }                                      from '@lezer/highlight';
 import { oneDark }                                   from '@codemirror/theme-one-dark';
@@ -172,6 +174,9 @@ export function useEditor({
         history(),
         lineNumbers(),
         closeBrackets(),
+        indentOnInput(),
+        EditorState.tabSize.of(4),
+        indentUnit.of('    '),
         keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
         langComp.current.of(getLanguageExtension(language)),
         themeComp.current.of(theme === 'dark' ? darkTheme : lightTheme),
