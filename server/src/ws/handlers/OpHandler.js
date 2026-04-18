@@ -30,7 +30,7 @@ async function handle(ws, sessionId, user, payload) {
   }
 
   try {
-    const { revision, ops } = await processOp(sessionId, userId, payload);
+    const { revision, ops } = await processOp(sessionId, userId, payload, ws._connId);
 
     ws.send(
       JSON.stringify({

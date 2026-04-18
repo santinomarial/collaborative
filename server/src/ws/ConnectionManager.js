@@ -11,6 +11,8 @@ class ConnectionManager {
     // sessionId → Redis onMessage callback (kept so we can unsubscribe later)
     this._redisCallbacks = new Map();
     this._pingInterval = null;
+    // Monotonically increasing counter; gives each socket a unique local ID
+    this._nextConnId = 0;
   }
 
   // -------------------------------------------------------------------------
@@ -22,8 +24,9 @@ class ConnectionManager {
    * Redis channel (once per session per process), then broadcast presence.
    */
   async add(sessionId, ws, userId, userMeta) {
-    ws.userId = userId;
+    ws.userId  = userId;
     ws.isAlive = true;
+    ws._connId = ++this._nextConnId;   // unique per socket, used to suppress echo
 
     const isFirstLocal = !this._sessions.has(sessionId);
 
@@ -31,7 +34,11 @@ class ConnectionManager {
       this._sessions.set(sessionId, new Set());
 
       // Subscribe once; fan messages out to all local sockets.
-      const cb = (payload) => this.broadcast(sessionId, payload);
+      // Pass senderConnId through so the originating socket is never echoed.
+      const cb = (msg) => {
+        const excludeConnId = msg?.payload?.senderConnId ?? null;
+        this._broadcastExcludeConn(sessionId, msg, excludeConnId);
+      };
       this._redisCallbacks.set(sessionId, cb);
       await redis.subscribeToSession(sessionId, cb);
     }
@@ -95,6 +102,20 @@ class ConnectionManager {
   // -------------------------------------------------------------------------
   // Presence helpers
   // -------------------------------------------------------------------------
+
+  /** Like broadcast(), but skips the socket whose _connId matches excludeConnId. */
+  _broadcastExcludeConn(sessionId, message, excludeConnId) {
+    const sockets = this._sessions.get(sessionId);
+    if (!sockets) return;
+
+    const payload = JSON.stringify(message);
+    for (const socket of sockets) {
+      if (excludeConnId !== null && socket._connId === excludeConnId) continue;
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(payload);
+      }
+    }
+  }
 
   async _broadcastPresence(sessionId) {
     const users = await redis.getPresence(sessionId);

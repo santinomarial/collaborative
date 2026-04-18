@@ -71,9 +71,12 @@ function _transformOpsAgainst(clientOps, serverOps) {
  * @param {string} sessionId
  * @param {string} userId
  * @param {{ revision: number, ops: object[] }} incoming
+ * @param {number|null} senderConnId  – ConnectionManager._connId of the originating
+ *   socket; included in the Redis payload so the fan-out callback can suppress
+ *   the echo back to the sender.
  * @returns {{ revision: number, ops: object[] }}
  */
-async function processOp(sessionId, userId, incoming) {
+async function processOp(sessionId, userId, incoming, senderConnId = null) {
   const t0 = Date.now();
   const { revision: clientRev, ops: clientOps } = incoming;
 
@@ -147,6 +150,7 @@ async function processOp(sessionId, userId, incoming) {
       revision: newRevision,
       ops: transformedOps,
       userId,
+      senderConnId,   // lets ConnectionManager skip the echo to the originating socket
       timestamp: new Date().toISOString(),
     },
   };
