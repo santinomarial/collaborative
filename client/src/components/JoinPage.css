@@ -1,160 +1,563 @@
+/* ── Page ─────────────────────────────────────────────────────────────────── */
+
 .join-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 40px;
+  gap: 32px;
   background: #1a1d23;
-  padding: 24px;
+  padding: 24px 16px;
 }
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
 
 .join-hero {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.join-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #21252b;
+  border: 1px solid #3e4451;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
 .join-heading {
-  margin: 0 0 8px;
-  font-size: 28px;
-  font-weight: 600;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
   color: #e8eaed;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
 }
 
 .join-sub {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #5c6370;
 }
 
-/* ── Card row ─────────────────────────────────────────────────────────────── */
+/* ── Cards layout ─────────────────────────────────────────────────────────── */
 
 .join-cards {
   display: flex;
-  align-items: flex-start;
-  gap: 0;
+  align-items: stretch;
   background: #21252b;
   border: 1px solid #3e4451;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
-  max-width: 640px;
+  max-width: 660px;
 }
 
+/* ── Divider ──────────────────────────────────────────────────────────────── */
+
 .join-divider {
-  align-self: stretch;
+  flex-shrink: 0;
+  width: 1px;
+  background: #3e4451;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
-  font-size: 11px;
-  color: #3e4451;
   position: relative;
 }
-.join-divider::before,
-.join-divider::after {
-  content: '';
+
+.join-divider span {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1px;
-  height: calc(50% - 14px);
-  background: #3e4451;
+  background: #21252b;
+  padding: 6px 0;
+  font-size: 10px;
+  font-weight: 500;
+  color: #3e4451;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
 }
-.join-divider::before { top: 0; }
-.join-divider::after  { bottom: 0; }
 
 /* ── Panel ────────────────────────────────────────────────────────────────── */
 
 .join-panel {
   flex: 1;
-  padding: 28px 24px;
+  padding: 28px 24px 32px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  min-width: 0;
 }
 
 .panel-title {
   margin: 0;
-  font-size: 15px;
-  font-weight: 500;
-  color: #abb2bf;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8eaed;
+  letter-spacing: -0.1px;
 }
 
 .panel-sub {
   margin: -8px 0 0;
   font-size: 12px;
   color: #5c6370;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
 .tab-row {
   display: flex;
-  gap: 0;
   background: #2c313a;
-  border-radius: 5px;
-  padding: 2px;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
 }
 
 .tab-btn {
   flex: 1;
-  padding: 5px 8px;
+  padding: 5px 10px;
   border: none;
-  border-radius: 3px;
+  border-radius: 4px;
   background: transparent;
   color: #5c6370;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.14s, color 0.14s;
 }
+
 .tab-btn.active {
   background: #3e4451;
+  color: #e8eaed;
+}
+
+.tab-btn:not(.active):hover {
   color: #abb2bf;
 }
-.tab-btn:not(.active):hover { color: #abb2bf; }
 
-/* ── Form elements ────────────────────────────────────────────────────────── */
+/* ── Form ─────────────────────────────────────────────────────────────────── */
 
 .join-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
+
+/* ── Field group ──────────────────────────────────────────────────────────── */
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #abb2bf;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Inputs ───────────────────────────────────────────────────────────────── */
 
 .join-input {
-  padding: 8px 10px;
-  border-radius: 5px;
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: 6px;
   border: 1px solid #3e4451;
   background: #2c313a;
-  color: #abb2bf;
+  color: #e8eaed;
   font-size: 13px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
 }
-.join-input::placeholder { color: #4b5263; }
-.join-input:focus { border-color: #528bff; }
+
+.join-input::placeholder {
+  color: #4b5263;
+}
+
+.join-input:focus {
+  border-color: #528bff;
+  box-shadow: 0 0 0 3px rgba(82, 139, 255, 0.18);
+}
+
+.join-input.input-error {
+  border-color: #e06c75;
+}
+
+.join-input.input-error:focus {
+  border-color: #e06c75;
+  box-shadow: 0 0 0 3px rgba(224, 108, 117, 0.18);
+}
+
+/* ── Password input wrapper ───────────────────────────────────────────────── */
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap .join-input {
+  padding-right: 38px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #4b5263;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  transition: color 0.14s;
+}
+
+.eye-btn:hover {
+  color: #abb2bf;
+}
+
+/* ── Password strength ────────────────────────────────────────────────────── */
+
+.strength-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strength-bar span {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: #3e4451;
+  transition: background 0.2s;
+}
+
+/* Weak: first segment red */
+.strength-bar.strength-weak span:nth-child(1) {
+  background: #e06c75;
+}
+
+/* Medium: first two yellow */
+.strength-bar.strength-medium span:nth-child(1),
+.strength-bar.strength-medium span:nth-child(2) {
+  background: #e5c07b;
+}
+
+/* Strong: all three green */
+.strength-bar.strength-strong span {
+  background: #98c379;
+}
+
+.strength-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 40px;
+  text-align: right;
+}
+
+.strength-label-weak   { color: #e06c75; }
+.strength-label-medium { color: #e5c07b; }
+.strength-label-strong { color: #98c379; }
+
+/* ── Checkbox ─────────────────────────────────────────────────────────────── */
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-native {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-custom {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid #3e4451;
+  background: #2c313a;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.checkbox-native:checked ~ .checkbox-custom {
+  background: #528bff;
+  border-color: #528bff;
+}
+
+.checkbox-native:checked ~ .checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 7px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.checkbox-native:focus-visible ~ .checkbox-custom {
+  box-shadow: 0 0 0 3px rgba(82, 139, 255, 0.3);
+}
+
+.checkbox-text {
+  font-size: 12px;
+  color: #5c6370;
+}
+
+/* ── Link button ──────────────────────────────────────────────────────────── */
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: #528bff;
+  cursor: pointer;
+  transition: color 0.14s;
+}
+
+.link-btn:hover {
+  color: #7aaeff;
+  text-decoration: underline;
+}
+
+/* ── Character counter ────────────────────────────────────────────────────── */
+
+.char-counter {
+  font-size: 11px;
+  color: #4b5263;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Avatar row ───────────────────────────────────────────────────────────── */
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  flex-shrink: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.color-swatch.selected {
+  box-shadow: 0 0 0 2px #1a1d23, 0 0 0 4px currentColor;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.avatar-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  transition: background 0.18s;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
 
 .join-btn {
-  padding: 8px 16px;
-  border-radius: 5px;
+  width: 100%;
+  padding: 9px 16px;
+  border-radius: 6px;
   border: none;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
-  margin-top: 2px;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 4px;
 }
-.join-btn:disabled { opacity: 0.45; cursor: default; }
 
-.join-btn.primary  { background: #528bff; color: #fff; }
-.join-btn.secondary { background: #2c313a; color: #abb2bf; border: 1px solid #3e4451; }
-.join-btn.primary:not(:disabled):hover  { background: #4272d4; }
-.join-btn.secondary:not(:disabled):hover { background: #3e4451; }
+.join-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
 
-.join-error {
+.join-btn.primary {
+  background: #528bff;
+  color: #fff;
+}
+
+.join-btn.primary:not(:disabled):not(.btn-success-state):hover {
+  background: #4272d4;
+  box-shadow: 0 2px 8px rgba(82, 139, 255, 0.35);
+}
+
+.join-btn.secondary {
+  background: #2c313a;
+  color: #abb2bf;
+  border: 1px solid #3e4451;
+}
+
+.join-btn.secondary:not(:disabled):not(.btn-success-state):hover {
+  background: #3e4451;
+  color: #e8eaed;
+}
+
+.join-btn.btn-success-state {
+  background: #3a9e5a !important;
+  color: #fff;
+  cursor: default;
+}
+
+.btn-check {
+  display: flex;
+  align-items: center;
+  color: #fff;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────────────────── */
+
+@keyframes jp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: jp-spin 0.55s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Error messages ───────────────────────────────────────────────────────── */
+
+.field-error {
+  margin: 0;
+  font-size: 11px;
+  color: #e06c75;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-error::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(224, 108, 117, 0.2);
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.global-error {
   margin: 0;
   font-size: 12px;
   color: #e06c75;
+  background: rgba(224, 108, 117, 0.1);
+  border: 1px solid rgba(224, 108, 117, 0.25);
+  border-radius: 5px;
+  padding: 8px 10px;
+  line-height: 1.45;
+}
+
+/* ── Mobile (≤ 480px) ─────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .join-page {
+    justify-content: flex-start;
+    padding-top: 32px;
+    gap: 24px;
+  }
+
+  .join-cards {
+    flex-direction: column;
+    border-radius: 10px;
+  }
+
+  .join-divider {
+    width: auto;
+    height: 1px;
+    writing-mode: initial;
+  }
+
+  .join-divider span {
+    writing-mode: initial;
+    padding: 0 8px;
+  }
+
+  .join-panel {
+    padding: 22px 18px 26px;
+  }
+
+  .join-heading {
+    font-size: 20px;
+  }
 }
