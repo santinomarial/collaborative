@@ -13,28 +13,63 @@ import {
 }                                                    from '@codemirror/autocomplete';
 import {
   syntaxHighlighting,
-  defaultHighlightStyle,
+  HighlightStyle,
 }                                                    from '@codemirror/language';
+import { tags }                                      from '@lezer/highlight';
 import { oneDark }                                   from '@codemirror/theme-one-dark';
 import { getLanguageExtension }                      from './languages';
 import { createCollabExtension, isRemote }           from './CollabExtension';
 import { cursorLayerExtension, updateCursors }       from './CursorLayer';
 
 // ── Themes ────────────────────────────────────────────────────────────────────
-const lightTheme = EditorView.theme(
-  {
-    '&': { background: '#ffffff', color: '#1a1a1a', height: '100%' },
-    '.cm-content': { caretColor: '#1a1a1a' },
-    '.cm-cursor': { borderLeftColor: '#1a1a1a' },
-    '.cm-gutters': { background: '#f5f5f5', color: '#999', border: 'none' },
-    '.cm-activeLineGutter': { background: '#e8e8e8' },
-    '.cm-activeLine': { background: '#f0f0f0' },
-    '.cm-selectionBackground': { background: '#b3d4ff' },
-    '&.cm-focused .cm-selectionBackground': { background: '#b3d4ff' },
-    '.cm-scroller': { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: '14px' },
-  },
-  { dark: false }
-);
+
+// VS Code "Light+" token colours
+const lightHighlightStyle = HighlightStyle.define([
+  { tag: [tags.keyword, tags.controlKeyword, tags.operatorKeyword,
+          tags.definitionKeyword, tags.moduleKeyword, tags.modifier],
+    color: '#0000ff' },
+  { tag: [tags.string, tags.special(tags.string), tags.regexp,
+          tags.docString, tags.character, tags.attributeValue],
+    color: '#a31515' },
+  { tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment],
+    color: '#008000', fontStyle: 'italic' },
+  { tag: [tags.number, tags.integer, tags.float],
+    color: '#098658' },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
+    color: '#795e26' },
+  { tag: [tags.typeName, tags.className, tags.namespace, tags.tagName],
+    color: '#267f99' },
+  { tag: [tags.operator, tags.arithmeticOperator, tags.logicOperator,
+          tags.bitwiseOperator, tags.compareOperator, tags.updateOperator,
+          tags.definitionOperator, tags.typeOperator, tags.derefOperator],
+    color: '#000000' },
+  { tag: [tags.variableName, tags.local(tags.variableName),
+          tags.definition(tags.variableName), tags.propertyName,
+          tags.attributeName],
+    color: '#001080' },
+  { tag: tags.bool,              color: '#0000ff' },
+  { tag: tags.null,              color: '#0000ff' },
+  { tag: tags.self,              color: '#0000ff' },
+  { tag: tags.punctuation,       color: '#000000' },
+]);
+
+const lightTheme = [
+  EditorView.theme(
+    {
+      '&': { background: '#ffffff', color: '#1a1a1a', height: '100%' },
+      '.cm-content': { caretColor: '#1a1a1a' },
+      '.cm-cursor': { borderLeftColor: '#1a1a1a' },
+      '.cm-gutters': { background: '#f5f5f5', color: '#999', border: 'none' },
+      '.cm-activeLineGutter': { background: '#e8e8e8' },
+      '.cm-activeLine': { background: '#f0f0f0' },
+      '.cm-selectionBackground': { background: '#b3d4ff' },
+      '&.cm-focused .cm-selectionBackground': { background: '#b3d4ff' },
+      '.cm-scroller': { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: '14px' },
+    },
+    { dark: false }
+  ),
+  syntaxHighlighting(lightHighlightStyle),
+];
 
 const darkTheme = [
   oneDark,
@@ -138,7 +173,6 @@ export function useEditor({
         lineNumbers(),
         closeBrackets(),
         keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
-        syntaxHighlighting(defaultHighlightStyle),
         langComp.current.of(getLanguageExtension(language)),
         themeComp.current.of(theme === 'dark' ? darkTheme : lightTheme),
         editableComp.current.of(EditorView.editable.of(!readOnly)),
