@@ -8,6 +8,10 @@ import {
   history,
 }                                                    from '@codemirror/commands';
 import {
+  closeBrackets,
+  closeBracketsKeymap,
+}                                                    from '@codemirror/autocomplete';
+import {
   syntaxHighlighting,
   defaultHighlightStyle,
 }                                                    from '@codemirror/language';
@@ -132,7 +136,8 @@ export function useEditor({
       extensions: [
         history(),
         lineNumbers(),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        closeBrackets(),
+        keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
         syntaxHighlighting(defaultHighlightStyle),
         langComp.current.of(getLanguageExtension(language)),
         themeComp.current.of(theme === 'dark' ? darkTheme : lightTheme),
